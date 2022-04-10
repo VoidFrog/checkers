@@ -1,0 +1,17 @@
+{
+  "name": "checkers_by_voidfrog",
+  "version": "1.0.0",
+  "description": "void",
+  "main": "server.js",
+  "dependencies": {
+    "@tweenjs/tween.js": "^18.6.4",
+    "express": "^4.17.3",
+    "node": "^17.7.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Krzysztof Piątek",
+  "license": "ISC"
+}
