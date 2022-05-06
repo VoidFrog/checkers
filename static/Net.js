@@ -112,7 +112,7 @@ class Net {
             console.log("enemy is ----> ", data.name )
             ui.info.innerText += ` ${data.name}`
 
-            game.playing_color = data.color
+            //game.playing_color = data.color
 
             if(data.color == 2){
                 game.camera.position.z = -150
@@ -167,13 +167,16 @@ class Net {
     }
 
     //pawn index in pawn_object_list
-    send_game_state(pawn_index, x, z){
+    send_game_state(pawn_index, x, z, row, offset, pawn_remove){
         //sends game state after your move
         let data = {
             game_state: game.pawns,
             pawn_moved: pawn_index,
             x: x,
-            z: z
+            z: z,
+            row: row,
+            offset: offset,
+            pawn_remove: pawn_remove
             //before this make setting game.room
             //room_number: game.room
         }
@@ -214,11 +217,15 @@ class Net {
         fetch('/sync_game_state', options)
         .then(response => response.json())
         .then(data => {
-            console.log(data.game_state, data.x, data.z, data.pawn_index)
-
+            
             if(game.pawns != data.game_state && data.pawn_index != undefined){
                 game.pawns = data.game_state
-
+                
+                console.log(data.game_state, data.x, data.z, data.pawn_index)
+                
+                game.pawn_object_list[data.pawn_index].row = data.row
+                game.pawn_object_list[data.pawn_index].offset = data.offset
+                
                 new TWEEN.Tween(game.pawn_object_list[data.pawn_index].mesh.position)
                         .to({x: data.x, z: data.z}, 500)
                         .repeat(0)
@@ -226,8 +233,30 @@ class Net {
                         .onUpdate(() => {
                             //console.log(animated_pawn.position) 
                         })
-                        .onComplete(() => {console.log("animation ended")})
+                        .onComplete(() => {
+                            console.log("animation ended", data.pawn_remove)
+                        })
                         .start()
+
+                if(data.pawn_remove != null){
+                    console.log("nl", data.pawn_remove)
+                    for(let pwn of game.pawn_object_list){
+                        console.log(pwn, data.pawn_remove, "qq")
+                        if(pwn.offset == data.pawn_remove.offset && pwn.row == data.pawn_remove.row){
+                            console.log("bruh")
+                            pwn.mesh.position.z = 1000
+                            pwn.mesh.position.x = 1000
+                            game.destroyed_pawns.push(pwn)
+                            game.scene.remove(pwn.mesh)
+                            
+                            //let index = game.pawn_object_list.indexOf(pwn)
+                            //game.pawn_object_list[index] = null
+
+                            data.pawn_remove = null
+                            break
+                        }
+                    }
+                }
             }
             
 

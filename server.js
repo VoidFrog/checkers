@@ -18,7 +18,9 @@ let moved_pawn;
 let move_to_x;
 let move_to_z;
 let to_delete = 0
-
+let row;
+let offset; 
+let pawn_remove;
 
 
 app.get('/', (req, res) => {
@@ -181,6 +183,9 @@ app.post('/send_game_state', (req, res) => {
     moved_pawn = data.pawn_moved
     move_to_x = data.x
     move_to_z = data.z
+    row = data.row
+    offset = data.offset
+    pawn_remove = data.pawn_remove
     
     console.log(moved_pawn)
 
@@ -196,7 +201,10 @@ app.post('/sync_game_state', (req, res) => {
         game_state: game_states[0],
         pawn_index: moved_pawn,
         x: move_to_x,
-        z: move_to_z
+        z: move_to_z,
+        row: row,
+        offset: offset,
+        pawn_remove: pawn_remove
     }
 
     //console.log(data.pawn_index, "jebac disa kurwe")

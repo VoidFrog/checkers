@@ -24,6 +24,11 @@ class Game {
         this.selected_pawn_index;
         this.playing_color;
 
+        this.destroyed_pawns = [];
+        this.turn = false;
+        //this.killed = false;
+        //add turns
+
         this.sync_data_interval;
 
         this.resize_handler();
@@ -51,6 +56,7 @@ class Game {
 
         net.send_game_state()
         
+        console.log("suka", this.playing_color)
         if(this.playing_color == 2){
             //move player to his side if his pawns are black
             this.camera.position.z = -150
@@ -66,6 +72,14 @@ class Game {
     add_mouse_listener(){
         //binding context
         let _this = this
+        
+        console.log(this.playing_color, "   playing color")
+        if(this.playing_color == 1){
+            this.turn = true
+        }
+        else{
+            this.turn = false
+        }
 
         document.addEventListener('click', function(e){
             _this.mouseVector.x = (e.clientX / window.innerWidth)*2 - 1
@@ -76,6 +90,7 @@ class Game {
             
             //this is the first clicked item including checkerboard
             //console.log(_this.intersects.length, _this.intersects[0])
+
 
             _this.pawn_collision()
             _this.move_pawn()
@@ -89,8 +104,10 @@ class Game {
     }
 
     pawn_collision(){
+        //console.log(this.pawn_object_list[0].color + "    " + game.playing_color + "     " + this.playing_color)
+        
         for(let pawn of this.pawn_object_list){
-            if(this.intersects[0]){
+            if(this.intersects[0] && this.playing_color == pawn.color){
                 if(this.intersects[0].object.position == pawn.mesh.position && (this.intersects[0].object.position.x % 10 == 0 && this.intersects[0].object.position.z % 10 == 0)){
                     for(let pawn of this.pawn_object_list){
                         this.scene.remove(pawn.line)
@@ -118,10 +135,113 @@ class Game {
         }
     }
 
+    //it will check if the clicked tile is empty
+    check_placement(tile){
+        //doesn't let you place your pawn on tile which is already taken
+        for(let pawn of this.pawn_object_list){
+            if(pawn.mesh.position.x == tile.mesh.position.x && pawn.mesh.position.z == tile.mesh.position.z && this.destroyed_pawns.indexOf(pawn) == -1){
+                console.log("tutaj cipsko")
+                return false
+            }
+        }
+
+        //2 is black, down-right corner is 0,0 in arr 
+
+        //let's you move 1 forward
+        if(this.selected_pawn.color == 2){
+            //--------black--------------------
+            if(this.selected_pawn.row + 1 == tile.row && (this.selected_pawn.offset+1 == tile.offset || this.selected_pawn.offset-1 == tile.offset)){
+                return true
+            }
+        }
+        //let's you move 1 forward
+        else if(this.selected_pawn.color == 1){
+            //--------white--------------------
+            if(this.selected_pawn.row - 1 == tile.row && (this.selected_pawn.offset+1 == tile.offset || this.selected_pawn.offset-1 == tile.offset)){
+                return true
+            }
+        }
+                
+        
+        //move is forbidden
+        return false
+    }
+
+    check_placement_attack(tile, pawn){
+        //2 is black, down-right corner is 0,0 in arr 
+        //let's you move 1 forward
+        if(this.selected_pawn.color == 2){
+            //--------black--------------------
+            //taking down enemy pawns
+            console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
+            if((this.selected_pawn.row+1 == pawn.row || this.selected_pawn.row-1 == pawn.row) && (this.selected_pawn.offset + 1 == pawn.offset || this.selected_pawn.offset - 1 == pawn.offset)){
+                //clicked enemy is +1up and (+1right or +1left)
+
+                //-1 is left, 1 is right
+                let left_or_right = this.selected_pawn.offset - pawn.offset
+                let up_or_down = 2*(pawn.row - this.selected_pawn.row)
+                if(this.selected_pawn.offset-left_or_right >= 0 && this.selected_pawn.offset-left_or_right < 8 && this.selected_pawn.row + up_or_down < 8){
+                    //this.pawns[this.selected_pawn.row+2][left_or_right]
+                    
+                    //false if not blank||tile obj if blank                    
+                    return true
+                }
+            }
+            
+        }
+        //let's you move 1 forward
+        else if(this.selected_pawn.color == 1){
+            //--------white--------------------
+            
+            //taking down enemy pawns
+            console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
+            if((this.selected_pawn.row+1 == pawn.row || this.selected_pawn.row-1 == pawn.row) && (this.selected_pawn.offset + 1 == pawn.offset || this.selected_pawn.offset - 1 == pawn.offset)){
+                //clicked enemy is +1up and (+1right or +1left)
+
+                //-1 is left, 1 is right
+                let left_or_right = this.selected_pawn.offset - pawn.offset
+                let up_or_down = 2*(pawn.row - this.selected_pawn.row)
+                if(this.selected_pawn.offset-left_or_right >= 0 && this.selected_pawn.offset-left_or_right < 8 && this.selected_pawn.row + up_or_down < 8){
+                    //this.pawns[this.selected_pawn.row+2][left_or_right]
+                    return true
+                }
+            }
+            
+        }
+                
+        
+        //move is forbidden
+        return false
+    }
+
+    is_blank_attack(offset, row){
+        for(let tile of this.checkerboard_tiles){
+            if(tile.row == row && tile.offset == offset){
+                for(let pwn of this.pawn_object_list){
+                    if(pwn.mesh.position.z == tile.mesh.position.z && pwn.mesh.position.x == tile.mesh.position.x){
+                        return false
+                    }
+                }
+
+                return tile
+            }
+        }
+    }
+
     move_pawn(){
         if(this.selected_pawn != null){
             for(let tile of this.checkerboard_tiles){
+
+                //without attacking
                 if(this.intersects[0].object.position == tile.mesh.position){
+                    console.log(this.check_placement(tile), "cipsko")
+                    if(this.check_placement(tile) == false){
+                        console.log(this.intersects[0].object, "cipsko", tile )
+                    }
+
+                }
+                if((this.intersects[0].object.position == tile.mesh.position) && this.check_placement(tile)){
+                    console.log(this.check_placement(tile), "wagina")
                     let z = this.intersects[0].object.position.z
                     let x = this.intersects[0].object.position.x
                     
@@ -136,10 +256,11 @@ class Game {
                     //deletes the moved pawn position from this place
                     this.pawns[arr_y][arr_x] = 0
                     //sets new position of moved pawn in arr
-                    this.pawns[tile_y][tile_x] = this.selected_pawn.color
+                    this.pawns[tile_y][tile_x] = this.selected_pawn.color                  
+
 
                     console.log(this.selected_pawn_index, 'pierdolenie w chuja')
-                    net.send_game_state(this.selected_pawn_index, x, z)
+                    net.send_game_state(this.selected_pawn_index, x, z, tile_y, tile_x)
                     
 
                     let animated_pawn = this.selected_pawn.mesh
@@ -155,11 +276,95 @@ class Game {
                         })
                         .onComplete(() => {console.log("animation ended")})
                         .start()
-
+                    
+                    
+                    for(let pwn of this.pawn_object_list){
+                        if(pwn.mesh.position == this.selected_pawn.mesh.position){
+                            pwn.row = tile.row
+                            pwn.offset = tile.offset
+                        }
+                    }
                     //this.selected_pawn.mesh.position.x = x
                     //this.selected_pawn.mesh.position.z = z
 
                     this.selected_pawn = null
+                    
+                }
+                else {
+                    for(let pawn of this.pawn_object_list){
+                        if(this.intersects[0].object.position == pawn.mesh.position && pawn.mesh.position != this.selected_pawn.mesh.position){
+                            if(this.intersects[0].object.position == pawn.mesh.position && this.check_placement_attack(tile, pawn)){
+                                //copy 99% of logic from above
+                                console.log('bicie')
+                                let left_or_right = this.selected_pawn.offset - pawn.offset
+
+                                let up_or_down = this.selected_pawn.row + 2*(pawn.row - this.selected_pawn.row);
+                                let tile = this.is_blank_attack(this.selected_pawn.offset-(2*left_or_right), up_or_down)
+
+                                if(tile){
+                                    let z = tile.mesh.position.z
+                                    let x = tile.mesh.position.x
+                    
+                                    //tile arr placement
+                                    let tile_x = tile.offset
+                                    let tile_y = tile.row
+
+                                    //pawn arr placement
+                                    let arr_x = this.selected_pawn.offset
+                                    let arr_y = this.selected_pawn.row
+
+                                    //deletes the moved pawn position from this place
+                                    this.pawns[arr_y][arr_x] = 0
+                                    //destroys enemy's pawn
+                                    this.pawns[pawn.row][pawn.offset] = 0
+                                    //sets new position of moved pawn in arr
+                                    this.pawns[tile_y][tile_x] = this.selected_pawn.color
+                                    
+                                    console.log(this.selected_pawn_index, 'zbijanko')
+                                    net.send_game_state(this.selected_pawn_index, x, z, tile_y, tile_x, pawn)
+                    
+
+                                    let animated_pawn = this.selected_pawn.mesh
+                                    this.destroyed_pawns.push(pawn)
+
+                                    this.scene.remove(this.selected_pawn.line)
+
+
+                                    new TWEEN.Tween(animated_pawn.position)
+                                        .to({x: x, z: z}, 500)
+                                        .repeat(0)
+                                        .easing(TWEEN.Easing.Bounce.Out)
+                                        .onUpdate(() => {
+                                            //console.log(animated_pawn.position) 
+                                        })
+                                        .onComplete(() => {
+                                            console.log("animation ended")
+                                            game.scene.remove(pawn.mesh)
+                                        })
+                                        .start()
+                                
+                                
+                                    for(let pwn in this.pawn_object_list){
+                                        if(this.pawn_object_list[pwn].mesh.position == this.selected_pawn.mesh.position){
+                                            this.pawn_object_list[pwn].row = tile.row
+                                            this.pawn_object_list[pwn].offset = tile.offset
+                                        }
+                                        if(pawn.mesh.position == this.pawn_object_list[pwn].mesh.position){
+                                            this.pawn_object_list[pwn].offset = 1000
+                                            this.pawn_object_list[pwn].row = 1000
+                                            this.pawn_object_list[pwn].mesh.position.z = 1000
+                                            this.pawn_object_list[pwn].mesh.position.x = 1000
+                                        }
+                                    }
+                                    //this.selected_pawn.mesh.position.x = x
+                                    //this.selected_pawn.mesh.position.z = z
+
+                                    this.selected_pawn = null
+                                }
+                            }
+                        }
+                    }
+
                     
                 }
             }
