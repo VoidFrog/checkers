@@ -26,13 +26,15 @@ class CheckerboardTile {
         if(this.color == 0){
             this.material = new THREE.MeshBasicMaterial({
                 //beige
-                color: 0x2E1807
+                color: 0x2E1807,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/E9d5P4R.jpg?1')
             })
         }
         else{
             this.material = new THREE.MeshBasicMaterial({
                 //black
-                color: 0xE0AC69
+                color: 0xE0AC69,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/E9d5P4R.jpg?1')
             })
         }
         //--------------------------------------------------
@@ -44,7 +46,6 @@ class CheckerboardTile {
         this.mesh = new THREE.Mesh(this.geometry, this.material)
 
         this.set_position()
-        this.click_listener()
     }
 
     set_position(){
@@ -55,7 +56,28 @@ class CheckerboardTile {
         this.mesh.position.set(this.x, this.y, this.z)
     }
 
-    click_listener(){
-        //add colision detection
+    delete_border(){
+        if(this.color == 0){
+            this.material = new THREE.MeshBasicMaterial({
+                //beige
+                color: 0x2E1807,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/E9d5P4R.jpg?1')
+            })
+        }
+        else{
+            this.material = new THREE.MeshBasicMaterial({
+                //black
+                color: 0xE0AC69,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/E9d5P4R.jpg?1')
+            })
+        }
+
+        this.mesh.material = this.material
+    }
+
+    clicked_border(){
+        this.mesh.material = new THREE.MeshBasicMaterial({color: 0xCC0000})
+        this.edges = new THREE.EdgesGeometry( this.geometry )
+        this.line = new THREE.LineSegments( this.edges, new THREE.LineBasicMaterial( { color: 0xCC0000 }))
     }
 }

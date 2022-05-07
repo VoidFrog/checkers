@@ -7,6 +7,7 @@ class Pawn {
         this.color = color
 
         this.material;
+        this.materials;
         this.geometry;
         this.mesh;
 
@@ -29,7 +30,8 @@ class Pawn {
         //making colored material--------------------------
         if(this.color == 2){
             this.material = new THREE.MeshBasicMaterial({
-                color: 0x323130
+                color: 0x323130,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/YM33spa.jpg?1')
             })
 
             this.body_color = "0x323130"
@@ -37,7 +39,9 @@ class Pawn {
         else{
             //this.color == 1 ---> color is white
             this.material = new THREE.MeshBasicMaterial({
-                color: 0xFBF6F0
+                //color: 0xFBF6F0,
+                color: 0xFFFFFF,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/YM33spa.jpg?1')
             })
 
             this.body_color = "0xFBF6F0"
@@ -66,6 +70,33 @@ class Pawn {
         this.line = new THREE.LineSegments( this.edges, new THREE.LineBasicMaterial( { color: 0xCC0000 }))
         
         this.selected = true
+    }
+
+    clicked_border(){
+        this.mesh.material = new THREE.MeshBasicMaterial({color: 0xCC0000})
+    }
+
+    delete_border(){
+        if(this.color == 2){
+            this.material = new THREE.MeshBasicMaterial({
+                color: 0x323130,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/YM33spa.jpg?1')
+            })
+
+            this.body_color = "0x323130"
+        }
+        else{
+            //this.color == 1 ---> color is white
+            this.material = new THREE.MeshBasicMaterial({
+                //color: 0xFBF6F0,
+                color: 0xFFFFFF,
+                map: new THREE.TextureLoader().load('https://i.imgur.com/YM33spa.jpg?1')
+            })
+
+            this.body_color = "0xFBF6F0"
+        }
+
+        this.mesh.material = this.material
     }
 
 }

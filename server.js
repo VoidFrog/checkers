@@ -21,6 +21,7 @@ let to_delete = 0
 let row;
 let offset; 
 let pawn_remove;
+let is_enemy_turn = 0;
 
 
 app.get('/', (req, res) => {
@@ -186,8 +187,11 @@ app.post('/send_game_state', (req, res) => {
     row = data.row
     offset = data.offset
     pawn_remove = data.pawn_remove
+    if(data.is_enemy_turn == true){
+        is_enemy_turn += 1
+    }
     
-    console.log(moved_pawn)
+    console.log(moved_pawn, data.is_enemy_turn)
 
     res.send("ok")
 })
@@ -204,10 +208,11 @@ app.post('/sync_game_state', (req, res) => {
         z: move_to_z,
         row: row,
         offset: offset,
-        pawn_remove: pawn_remove
+        pawn_remove: pawn_remove,
+        is_enemy_turn: is_enemy_turn
     }
 
-    //console.log(data.pawn_index, "jebac disa kurwe")
+    console.log(data.is_enemy_turn, "in sync game state")
 
     data = JSON.stringify(data)
     

@@ -73,7 +73,7 @@ class Net {
                 ui.hide_menu()
 
                 //get name of opponent
-                ui.info.innerText = `USER - ${net.player_login} \n`
+                ui.info.innerText = `USER - ${net.player_login} ----------------------- YOUR TURN - ${game.turn} \n`
                 ui.info.innerText += 'Game found... Your enemy is'
                 net.get_enemy_name()
                 
@@ -111,7 +111,7 @@ class Net {
         .then(data => {
             console.log("enemy is ----> ", data.name )
             ui.info.innerText += ` ${data.name}`
-
+            net.enemy_name = data.name
             //game.playing_color = data.color
 
             if(data.color == 2){
@@ -167,7 +167,7 @@ class Net {
     }
 
     //pawn index in pawn_object_list
-    send_game_state(pawn_index, x, z, row, offset, pawn_remove){
+    send_game_state(pawn_index, x, z, row, offset, pawn_remove, is_enemy_turn){
         //sends game state after your move
         let data = {
             game_state: game.pawns,
@@ -176,12 +176,13 @@ class Net {
             z: z,
             row: row,
             offset: offset,
-            pawn_remove: pawn_remove
+            pawn_remove: pawn_remove,
+            is_enemy_turn: !game.turn
             //before this make setting game.room
             //room_number: game.room
         }
 
-        console.log('cum', data.pawn_moved, game.selected_pawn_index)
+        console.log('cum', data.pawn_moved, game.selected_pawn_index, data.is_enemy_turn, game.turn, is_enemy_turn)
 
         const options = {
             method: "POST",
@@ -217,6 +218,9 @@ class Net {
         fetch('/sync_game_state', options)
         .then(response => response.json())
         .then(data => {
+
+            ui.info.innerText = `USER - ${net.player_login} ----------------------- YOUR TURN - ${game.turn} \n`
+            ui.info.innerText += `Game found... Your enemy is ${net.enemy_name}`
             
             if(game.pawns != data.game_state && data.pawn_index != undefined){
                 game.pawns = data.game_state
@@ -257,6 +261,28 @@ class Net {
                         }
                     }
                 }
+
+                console.log(data.is_enemy_turn, "pierdolenie", game.turn)
+                if(game.playing_color == 1){
+                    if(data.is_enemy_turn%2 == 0){
+                        game.turn = true
+    
+                    }
+                    else {
+                        game.turn = false
+                    }
+                }
+                else if(game.playing_color == 2){
+                    if(data.is_enemy_turn%2 == 1){
+                        game.turn = true
+                    }
+                    else{
+                        game.turn = false
+                    }
+                }
+
+                
+                
             }
             
 
