@@ -230,6 +230,8 @@ let delete_players = setInterval(function(){
         searching_players.splice(0, 1)
         searching_players.splice(0, 1)
 
+        is_enemy_turn = 0
+
         let len = playing_players.length
         let room = [playing_players[len-2], playing_players[len-1]]
         rooms.push(room)
