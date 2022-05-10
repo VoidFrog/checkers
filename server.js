@@ -193,7 +193,7 @@ app.post('/send_game_state', (req, res) => {
     
     console.log(moved_pawn, data.is_enemy_turn)
 
-    res.send("ok")
+    res.send(JSON.stringify({ok:"ok"}))
 })
 
 app.post('/sync_game_state', (req, res) => {
@@ -217,6 +217,17 @@ app.post('/sync_game_state', (req, res) => {
     data = JSON.stringify(data)
     
     res.send(data)
+})
+
+app.post('/pass_turn', (req, res) => {
+    let data = req.body
+
+    is_enemy_turn += data.is_enemy_turn
+    
+    let response = {
+        body: "works"
+    }
+    res.send(JSON.stringify(response))
 })
 
 

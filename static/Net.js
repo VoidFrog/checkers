@@ -19,7 +19,7 @@ class Net {
         fetch('/search_for_player', options)
         .then(response => response.json())
         .then(data => {
-            console.log("added player ----> ", data.player )
+            //console.log("added player ----> ", data.player )
             let info = document.getElementById('info_table')
             let search_button = document.getElementById('search_button')
             
@@ -182,7 +182,7 @@ class Net {
             //room_number: game.room
         }
 
-        console.log('cum', data.pawn_moved, game.selected_pawn_index, data.is_enemy_turn, game.turn, is_enemy_turn)
+        console.log(data.pawn_moved, game.selected_pawn_index, data.is_enemy_turn, game.turn, is_enemy_turn)
 
         const options = {
             method: "POST",
@@ -221,11 +221,11 @@ class Net {
 
             ui.info.innerText = `USER - ${net.player_login} ----------------------- YOUR TURN - ${game.turn} \n`
             ui.info.innerText += `Game found... Your enemy is ${net.enemy_name}`
-            
+
             if(game.pawns != data.game_state && data.pawn_index != undefined){
                 game.pawns = data.game_state
                 
-                console.log(data.game_state, data.x, data.z, data.pawn_index)
+                //console.log(data.game_state, data.x, data.z, data.pawn_index)
                 
                 game.pawn_object_list[data.pawn_index].row = data.row
                 game.pawn_object_list[data.pawn_index].offset = data.offset
@@ -243,11 +243,11 @@ class Net {
                         .start()
 
                 if(data.pawn_remove != null){
-                    console.log("nl", data.pawn_remove)
+                    //console.log("nl", data.pawn_remove)
                     for(let pwn of game.pawn_object_list){
-                        console.log(pwn, data.pawn_remove, "qq")
+                        //console.log(pwn, data.pawn_remove, "qq")
                         if(pwn.offset == data.pawn_remove.offset && pwn.row == data.pawn_remove.row){
-                            console.log("bruh")
+                            //console.log("bruh")
                             pwn.mesh.position.z = 1000
                             pwn.mesh.position.x = 1000
                             game.destroyed_pawns.push(pwn)
@@ -262,29 +262,162 @@ class Net {
                     }
                 }
 
-                console.log(data.is_enemy_turn, "pierdolenie", game.turn)
+                //console.log(data.is_enemy_turn, "turn info", game.turn)
                 if(game.playing_color == 1){
                     if(data.is_enemy_turn%2 == 0){
+                        if(game.turn != true){
+                            ui.reset_timer()
+                            ui.start_clock()
+                        }
                         game.turn = true
-    
+                        
                     }
                     else {
                         game.turn = false
+                        clearInterval(ui.clock_tick)
+                        ui.clock.textContent = '----'
+
+                        for(let tl of game.surrounding_tiles){
+                            tl.delete_border()
+                        }
+                        for(let pn of game.surrounding_pawns){
+                            pn.delete_border()
+                        }
+                        if(game.selected_pawn != null){
+                            if(game.selected_pawn.line != null){
+                                game.scene.remove(game.selected_pawn.line)
+                            }
+                        }
+                        game.check_win_condition(game.selected_pawn)
+                        game.player_lost(game.selected_pawn)
+                        game.selected_pawn = null
                     }
                 }
                 else if(game.playing_color == 2){
-                    if(data.is_enemy_turn%2 == 1){
+                    if(data.is_enemy_turn%2 == 1){                        
+                        if(game.turn != true){
+                            ui.reset_timer()
+                            ui.start_clock()
+                        }
                         game.turn = true
                     }
                     else{
                         game.turn = false
+                        clearInterval(ui.clock_tick)
+                        ui.clock.textContent = '----'
+
+                        for(let tl of game.surrounding_tiles){
+                            tl.delete_border()
+                        }
+                        for(let pn of game.surrounding_pawns){
+                            pn.delete_border()
+                        }
+                        if(game.selected_pawn != null){
+                            if(game.selected_pawn.line != null){
+                                game.scene.remove(game.selected_pawn.line)
+                            }
+                        }
+                        game.check_win_condition(game.selected_pawn)
+                        game.player_lost(game.selected_pawn)
+                        game.selected_pawn = null
+
                     }
                 }
 
                 
                 
             }
-            
+
+            else if(game.playing_color == 1){
+                if(data.is_enemy_turn%2 == 0){
+                    if(game.turn != true){
+                        ui.reset_timer()
+                        ui.start_clock()
+                    }
+                    game.turn = true
+                    game.check_win_condition(game.selected_pawn)
+                    game.player_lost(game.selected_pawn)
+                    
+                }
+                else {
+                    game.turn = false
+                    clearInterval(ui.clock_tick)
+                    ui.clock.textContent = '----'
+
+                    for(let tl of game.surrounding_tiles){
+                        tl.delete_border()
+                    }
+                    for(let pn of game.surrounding_pawns){
+                        pn.delete_border()
+                    }
+                    if(game.selected_pawn != null){
+                        if(game.selected_pawn.line != null){
+                            game.scene.remove(game.selected_pawn.line)
+                        }
+                    }
+
+                    game.check_win_condition(game.selected_pawn)
+                    game.player_lost(game.selected_pawn)
+                    game.selected_pawn = null
+                }
+            }
+            else if(game.playing_color == 2){
+                if(data.is_enemy_turn%2 == 1){                        
+                    if(game.turn != true){
+                        ui.reset_timer()
+                        ui.start_clock()
+                    }
+                    game.turn = true
+                    game.check_win_condition(game.selected_pawn)
+                    game.player_lost(game.selected_pawn)
+                }
+                else{
+                    game.turn = false
+                    clearInterval(ui.clock_tick)
+                    ui.clock.textContent = '----'
+
+                    for(let tl of game.surrounding_tiles){
+                        tl.delete_border()
+                    }
+                    for(let pn of game.surrounding_pawns){
+                        pn.delete_border()
+                    }
+                    if(game.selected_pawn != null){
+                        if(game.selected_pawn.line != null){
+                            game.scene.remove(game.selected_pawn.line)
+                        }
+                    }
+
+                    game.check_win_condition(game.selected_pawn)
+                    game.player_lost(game.selected_pawn)
+                    game.selected_pawn = null
+
+                }
+            }
+        })
+        .catch(error => console.log(error))
+    }
+
+    pass_turn(){
+        //sends game state after your move
+        let data = {
+            is_enemy_turn: !game.turn
+            //before this make setting game.room
+            //room_number: game.room
+        }
+
+        const options = {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+
+        fetch('/pass_turn', options)
+        .then(response => response.json())
+        .then(data => {
+            console.log("turn passed due to end of time for the turn", data)
 
         })
         .catch(error => console.log(error))

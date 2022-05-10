@@ -49,7 +49,7 @@ class Game {
         TWEEN.update()
         requestAnimationFrame(this.render)
         this.renderer.render(this.scene, this.camera)
-        console.log('rendering in progress...')
+        //console.log('rendering in progress...')
     }
 
     init(){
@@ -59,7 +59,7 @@ class Game {
 
         net.send_game_state()
         
-        console.log("suka", this.playing_color)
+        //console.log("color of pawns", this.playing_color)
         if(this.playing_color == 2){
             //move player to his side if his pawns are black
             this.camera.position.z = -150
@@ -76,9 +76,10 @@ class Game {
         //binding context
         let _this = this
         
-        console.log(this.playing_color, "   playing color")
+        //console.log(this.playing_color, "playing color")
         if(this.playing_color == 1){
             this.turn = true
+            ui.start_clock()
         }
         else{
             this.turn = false
@@ -101,8 +102,9 @@ class Game {
         })
     }
 
+    
+
     sync_data(){        
-        console.log("cum")
         return setInterval(net.sync_game_state, 1000)
     }
 
@@ -132,7 +134,7 @@ class Game {
                     pawn.selected = true
                     this.selected_pawn = pawn
     
-                    console.log(pawn.mesh, pawn.offset, pawn.row, pawn.color)
+                    //console.log(pawn.mesh, pawn.offset, pawn.row, pawn.color)
 
                     this.moves(this.selected_pawn)
                 }
@@ -162,7 +164,7 @@ class Game {
                                 
                 //positions of the 8 surrounding tiles
                 if(new_x > -1 && new_x < 8 && new_y > -1 && new_y < 8){
-                    console.log(x,y, _x, _y, new_x, new_y, "surrounding")
+                    //console.log(x,y, _x, _y, new_x, new_y, "surrounding")
 
                     for(let tile of this.checkerboard_tiles){
                         if(tile.offset == new_x && tile.row == new_y){
@@ -181,25 +183,198 @@ class Game {
             }
         }
 
-        console.log("surrounding", this.surrounding_tiles)
+        //console.log("surrounding", this.surrounding_tiles)
 
         for(let t of this.surrounding_tiles){
-            console.log("surrounding", this.check_placement(t))
+            //console.log("surrounding", this.check_placement(t))
             if(this.check_placement(t)){
                 t.clicked_border()
             }
         }
 
-        console.log(this.surrounding_pawns, "jdjdjd")
+        //console.log(this.surrounding_pawns, "jdjdjd")
         for(let p of this.surrounding_pawns){
             let tile_x = pawn.offset - p.offset
             let tile_y = pawn.row + 2*(p.row - pawn.row)
 
-            console.log(tile_x, tile_y, "jdjdjdjd", pawn.offset - (2*tile_x))
+            //console.log(tile_x, tile_y, "jdjdjdjd", pawn.offset - (2*tile_x))
 
             if(this.is_blank_attack(pawn.offset - (2*tile_x), tile_y)){
                 p.clicked_border()
             }
+        }
+    }
+
+    enemy_moves(pawn){
+        let x = pawn.offset
+        let y = pawn.row
+
+        let square_area = [-1, 1]
+        let surrounding_tiles = []
+        let surrounding_pawns = []
+        let possible_moves = 0
+
+        for(let _y of square_area){
+            for(let _x of square_area){
+                let new_x = x + _x
+                let new_y = y + _y
+                                
+                //positions of the 8 surrounding tiles
+                if(new_x > -1 && new_x < 8 && new_y > -1 && new_y < 8){
+                    //console.log(x,y, _x, _y, new_x, new_y, "surrounding")
+
+                    for(let tile of this.checkerboard_tiles){
+                        if(tile.offset == new_x && tile.row == new_y){
+                            surrounding_tiles.push(tile)
+                        }
+                    }
+
+                    for(let pwn of this.pawn_object_list){
+                        if(pwn.offset == new_x && pwn.row == new_y && pwn.color == this.playing_color && this.check_placement_attack(pwn)){
+                            surrounding_pawns.push(pwn)
+                        }
+                    }
+                }
+
+    
+            }
+        }
+
+        //console.log("surrounding", surrounding_tiles)
+
+        for(let t of surrounding_tiles){
+            //console.log("surrounding", this.check_placement(t))
+            if(this.check_placement(t)){
+                //tiles that enemy can move to
+                possible_moves += 1
+            }
+        }
+
+        //console.log(surrounding_pawns, "jdjdjd")
+        for(let p of surrounding_pawns){
+            let tile_x = pawn.offset - p.offset
+            let tile_y = pawn.row + 2*(p.row - pawn.row)
+
+            //console.log(tile_x, tile_y, "jdjdjdjd", pawn.offset - (2*tile_x))
+
+            if(this.is_blank_attack(pawn.offset - (2*tile_x), tile_y) && this.destroyed_pawns.indexOf(p) == -1){
+                //pawns that enemy can attack
+                possible_moves += 1
+            }
+        }
+
+        return possible_moves;
+    }
+
+    player_moves(pawn){
+        let x = pawn.offset
+        let y = pawn.row
+
+        let square_area = [-1, 1]
+        let surrounding_tiles = []
+        let surrounding_pawns = []
+        let possible_moves = 0
+
+        for(let _y of square_area){
+            for(let _x of square_area){
+                let new_x = x + _x
+                let new_y = y + _y
+                                
+                //positions of the 8 surrounding tiles
+                if(new_x > -1 && new_x < 8 && new_y > -1 && new_y < 8){
+                    //console.log(x,y, _x, _y, new_x, new_y, "surrounding")
+
+                    for(let tile of this.checkerboard_tiles){
+                        if(tile.offset == new_x && tile.row == new_y){
+                            surrounding_tiles.push(tile)
+                        }
+                    }
+
+                    for(let pwn of this.pawn_object_list){
+                        if(pwn.offset == new_x && pwn.row == new_y && pwn.color != this.playing_color && this.check_placement_attack(pwn)){
+                            surrounding_pawns.push(pwn)
+                        }
+                    }
+                }
+
+    
+            }
+        }
+
+        //console.log("surrounding", surrounding_tiles)
+
+        for(let t of surrounding_tiles){
+            //console.log("surrounding", this.check_placement(t))
+            if(this.check_placement(t)){
+                //tiles that enemy can move to
+                possible_moves += 1
+            }
+        }
+
+        //console.log(surrounding_pawns, "jdjdjd")
+        for(let p of surrounding_pawns){
+            let tile_x = pawn.offset - p.offset
+            let tile_y = pawn.row + 2*(p.row - pawn.row)
+
+            //console.log(tile_x, tile_y, "jdjdjdjd", pawn.offset - (2*tile_x))
+
+            if(this.is_blank_attack(pawn.offset - (2*tile_x), tile_y) && this.destroyed_pawns.indexOf(p) == -1){
+                //pawns that enemy can attack
+                possible_moves += 1
+            }
+        }
+
+        return possible_moves;
+    }
+
+    player_lost(selected){
+        let pawns = []
+        let moves = 0
+
+        for(let pawn of this.pawn_object_list){
+            if(pawn.color == this.playing_color && this.destroyed_pawns.indexOf(pawn) == -1){
+                pawns.push(pawn)
+            }
+        }
+
+        //check every possible move for the player pawns
+        for(let pawn of pawns){
+            this.selected_pawn = pawn
+            moves += this.player_moves(pawn)
+        }
+
+        this.selected_pawn = selected
+        console.log(moves, pawns.length, "moves - lost")
+
+        //defeat condition met
+        if(pawns.length == 0 || moves == 0){
+            alert("you lost!!!")
+        }
+    }
+
+    check_win_condition(selected){
+        //win by killing all of enemy pawns or not having any moves left
+        let enemy_pawns = []
+        let enemy_moves = 0
+
+        for(let pawn of this.pawn_object_list){
+            if(pawn.color != this.playing_color){
+                enemy_pawns.push(pawn)
+            }
+        }
+
+        //check every possible move for the enemy pawns
+        for(let pawn of enemy_pawns){
+            this.selected_pawn = pawn
+            enemy_moves += this.enemy_moves(pawn)
+        }
+
+        this.selected_pawn = selected
+        console.log(enemy_moves, enemy_pawns.length, "moves")
+
+        //win condition met
+        if(enemy_pawns.length == 0 || enemy_moves == 0){
+            alert("you won!!!")
         }
     }
 
@@ -208,7 +383,7 @@ class Game {
         //doesn't let you place your pawn on tile which is already taken
         for(let pawn of this.pawn_object_list){
             if(pawn.mesh.position.x == tile.mesh.position.x && pawn.mesh.position.z == tile.mesh.position.z && this.destroyed_pawns.indexOf(pawn) == -1){
-                console.log("tutaj cipsko")
+                //console.log("here")
                 return false
             }
         }
@@ -241,7 +416,7 @@ class Game {
         if(this.selected_pawn.color == 2){
             //--------black--------------------
             //taking down enemy pawns
-            console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
+            //console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
             if((this.selected_pawn.row+1 == pawn.row || this.selected_pawn.row-1 == pawn.row) && (this.selected_pawn.offset + 1 == pawn.offset || this.selected_pawn.offset - 1 == pawn.offset)){
                 //clicked enemy is +1up and (+1right or +1left)
 
@@ -262,7 +437,7 @@ class Game {
             //--------white--------------------
             
             //taking down enemy pawns
-            console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
+            //console.log(this.selected_pawn.row, "  selected || to hit  ", pawn.row, this.selected_pawn.offset, "  selected || to hit  ", pawn.offset )
             if((this.selected_pawn.row+1 == pawn.row || this.selected_pawn.row-1 == pawn.row) && (this.selected_pawn.offset + 1 == pawn.offset || this.selected_pawn.offset - 1 == pawn.offset)){
                 //clicked enemy is +1up and (+1right or +1left)
 
@@ -291,7 +466,7 @@ class Game {
                     }
                 }
 
-                console.log("zxc", tile.row, row, tile.offset, offset)
+                //console.log("zxc", tile.row, row, tile.offset, offset)
                 return tile
             }
         }
@@ -305,17 +480,17 @@ class Game {
 
                 //just for debbuging purposes
                 if(this.intersects[0].object.position == tile.mesh.position){
-                    console.log(this.check_placement(tile), "cipsko")
+                    //console.log(this.check_placement(tile), "works")
                     if(this.check_placement(tile) == false){
-                        console.log(this.intersects[0].object, "cipsko", tile)
+                       //console.log(this.intersects[0].object, "works again", tile)
                     }
                 }
 
-                console.log(this.turn, "pierdolenie")
+                //console.log(this.turn, "turn")
 
                 //1st without attacking ||2nd with attacking
                 if((this.intersects[0].object.position == tile.mesh.position) && this.check_placement(tile) && this.turn){
-                    console.log(this.check_placement(tile), "wagina")
+                    //console.log(this.check_placement(tile), "chck placement")
 
                     for(let tl of this.surrounding_tiles){
                         tl.delete_border()
@@ -344,7 +519,7 @@ class Game {
                     this.pawns[tile_y][tile_x] = this.selected_pawn.color                  
 
 
-                    console.log(this.selected_pawn_index, 'pierdolenie w chuja')
+                    console.log(this.selected_pawn_index, 'selected pawn index')
                     //                                                                 if true then enemy turn
                     net.send_game_state(this.selected_pawn_index, x, z, tile_y, tile_x, true)
                     
@@ -372,16 +547,18 @@ class Game {
                     }
                     //this.selected_pawn.mesh.position.x = x
                     //this.selected_pawn.mesh.position.z = z
-
-                    this.selected_pawn = null
+                    this.check_win_condition(this.selected_pawn)
+                    this.player_lost(this.selected_pawn)                    
                     
+                    this.selected_pawn = null
+
                 }
                 else {
                     for(let pawn of this.pawn_object_list){
                         if(this.intersects[0].object.position == pawn.mesh.position && pawn.mesh.position != this.selected_pawn.mesh.position){
                             if(this.intersects[0].object.position == pawn.mesh.position && this.check_placement_attack(pawn) && this.turn){
                                 //copy 99% of logic from above
-                                console.log('bicie')
+                                //console.log('bicie')
                                 let left_or_right = this.selected_pawn.offset - pawn.offset
 
                                 let up_or_down = this.selected_pawn.row + 2*(pawn.row - this.selected_pawn.row);
@@ -454,8 +631,11 @@ class Game {
                                     }
                                     //this.selected_pawn.mesh.position.x = x
                                     //this.selected_pawn.mesh.position.z = z
-
+                                    this.check_win_condition(this.selected_pawn)
+                                    this.player_lost(this.selected_pawn)
+                                    
                                     this.selected_pawn = null
+
                                 }
                             }
                         }
@@ -641,6 +821,4 @@ class Game {
             this.camera.updateProjectionMatrix()
         })
     }
-
-
 }
