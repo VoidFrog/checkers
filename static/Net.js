@@ -394,6 +394,26 @@ class Net {
 
                 }
             }
+
+            if(data.pawn_remove != null){
+                //console.log("nl", data.pawn_remove)
+                for(let pwn of game.pawn_object_list){
+                    //console.log(pwn, data.pawn_remove, "qq")
+                    if(pwn.offset == data.pawn_remove.offset && pwn.row == data.pawn_remove.row){
+                        //console.log("bruh")
+                        pwn.mesh.position.z = 1000
+                        pwn.mesh.position.x = 1000
+                        game.destroyed_pawns.push(pwn)
+                        game.scene.remove(pwn.mesh)
+                        
+                        //let index = game.pawn_object_list.indexOf(pwn)
+                        //game.pawn_object_list[index] = null
+
+                        data.pawn_remove = null
+                        break
+                    }
+                }
+            }
         })
         .catch(error => console.log(error))
     }
